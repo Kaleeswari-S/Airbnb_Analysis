@@ -1,0 +1,8 @@
+!pip install dataprep
+!pip install pymongo
+!pip install streamit
+!pip install pandas
+!pip install seaborn
+!pip install plotly.express
+!pip install wordcloud
+!pip install matplotlib
