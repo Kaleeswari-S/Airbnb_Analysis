@@ -36,3 +36,18 @@ Use the cleaned data to analyze and visualize how prices vary across different l
 
 Step 5 :
 Utilize Tableau to create a comprehensive dashboard that presents key insights from your analysis. Combine different visualizations, such as maps, charts, and tables, to provide a holistic view of the Airbnb dataset and its patterns.
+
+
+## Tableau Dashboard link: https://public.tableau.com/app/profile/kaleeswari.s/vizzes
+
+## 📹 Project Demo Video: 
+
+## Contributing
+Contributions to this project are welcome! If you encounter any issues or have suggestions for improvements, please feel free to submit a pull request.
+
+## @ Contact:
+📧 Email: kaleeswariramkumar25@gmail.com
+
+🌐 LinkedIn: linkedin.com/in/kaleeswari-s
+
+For any further questions or inquiries, feel free to reach out. We are happy to assist you with any queries.
