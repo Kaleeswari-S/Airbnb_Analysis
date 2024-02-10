@@ -1,203 +1,462 @@
-# Importing Libraries
+#Required Libraries
+
 import pandas as pd
-import pymongo
 import streamlit as st
-import plotly.express as px
 from streamlit_option_menu import option_menu
+pd.set_option('display.max_columns', None)
+import plotly.express as px
+import warnings
+warnings.filterwarnings("ignore")
+import plotly.graph_objects as go
+#import seaborn as sns
+import matplotlib.pyplot as plt
 from PIL import Image
 
-# Setting up page configuration
-icon = Image.open("D:\AirbnbAnalysis\download.png")
-st.set_page_config(page_title= "Airbnb Data Visualization | By Kaleeswari S",
-                   page_icon= icon,
-                   layout= "wide",
-                   initial_sidebar_state= "expanded",
-                   menu_items={'About': """# This dashboard app is created by *Kaleeswari S*!
-                                        Data has been gathered from mongodb atlas"""} )
-st.markdown("<h1 style='text-align: center; color: black;'>AIRBNB ANALYSIS</h1>", unsafe_allow_html=True)
 
+# Streamlit part
 
-# Creating option menu in the side bar
-selected = option_menu(None, ["Home","Overview","Explore","Contact"], 
-                        icons=["house","graph-up-arrow","bar-chart-line","phone"],
-                        default_index=0,
-                        orientation="horizontal",
-                        styles={"nav-link": {"font-size": "20px", "text-align": "left", "margin": "-2px", "--hover-color": "#FF5A5F"},
-                                "nav-link-selected": {"background-color": "#FF5A5F"}} )
+st.set_page_config(layout= "wide")
+st.title("AIRBNB DATA ANALYSIS")
+st.write("")
 
-# CREATING CONNECTION WITH MONGODB ATLAS AND RETRIEVING THE DATA
-client = pymongo.MongoClient("mongodb+srv://kaleeswariramkumar25:ram@kaleeswari24.stlokdg.mongodb.net/?retryWrites=true&w=majority")
-db = client.sample_airbnb
-data = db.listingsAndReviews
+def datafr():
+    df= pd.read_csv("Airbnb.csv")
+    return df
 
-# READING THE CLEANED DATAFRAME
-df = pd.read_csv("D:\AirbnbAnalysis\Airbnb_data.csv")
+df= datafr()
 
-# HOME PAGE
-if selected == "Home":
-    # Title Image
-    col1,col2 = st.columns(2,gap= 'medium')
-    col1.markdown("### :blue[Domain] : Travel Industry, Property Management and Tourism")
-    col1.markdown("### :blue[Technologies used] : Python, Pandas, Plotly, Streamlit, MongoDB")
-    col1.markdown("### :blue[Overview] : To analyze Airbnb data using MongoDB Atlas, perform data cleaning and preparation, develop interactive visualizations, and create dynamic plots to gain insights into pricing variations, availability patterns, and location-based trends. ")  
+with st.sidebar:
+    select= option_menu("Main Menu", ["Home", "Data Exploration", "About","Contact"])
+
+if select == "Home":
+    col1,col2,col3 = st.columns(3)
+
     with col2:
-        st.image(Image.open("D:\AirbnbAnalysis\airbnb.png"),width=600)
-        st.link_button("Power BI Report","https://app.powerbi.com/links/fwTdzdgeFV?ctid=99add618-5ae6-4a6d-b60e-c78885a3a981&pbi_source=linkShare")
+        image1= Image.open("airbnb.png")
+        st.image(image1)
+
+    st.header("About Airbnb")
+    st.write("")
+    st.write('''***Airbnb is an online marketplace that connects people who want to rent out
+              their property with people who are looking for accommodations,
+              typically for short stays. Airbnb offers hosts a relatively easy way to
+              earn some income from their property.Guests often find that Airbnb rentals
+              are cheaper and homier than hotels.***''')
+    st.write("")
+    st.write('''***Airbnb Inc (Airbnb) operates an online platform for hospitality services.
+                  The company provides a mobile application (app) that enables users to list,
+                  discover, and book unique accommodations across the world.
+                  The app allows hosts to list their properties for lease,
+                  and enables guests to rent or lease on a short-term basis,
+                  which includes vacation rentals, apartment rentals, homestays, castles,
+                  tree houses and hotel rooms. The company has presence in China, India, Japan,
+                  Australia, Canada, Austria, Germany, Switzerland, Belgium, Denmark, France, Italy,
+                  Norway, Portugal, Russia, Spain, Sweden, the UK, and others.
+                  Airbnb is headquartered in San Francisco, California, the US.***''')
     
-# OVERVIEW PAGE
-if selected == "Overview":
-    tab1,tab2 = st.tabs(["$\huge RAW DATA $", "$\huge INSIGHTS $"])
-    
-    # RAW DATA TAB
+    st.header("Background of Airbnb")
+    st.write("")
+    st.write('''***Airbnb was born in 2007 when two Hosts welcomed three guests to their
+              San Francisco home, and has since grown to over 4 million Hosts who have
+                welcomed over 1.5 billion guest arrivals in almost every country across the globe.***''')
+
+
+if select == "Data Exploration":
+    tab1, tab2, tab3, tab4, tab5= st.tabs(["***PRICE ANALYSIS***","***AVAILABILITY ANALYSIS***","***LOCATION BASED***", "***GEOSPATIAL VISUALIZATION***", "***TOP CHARTS***"])
     with tab1:
-        # RAW DATA
-        col1,col2 = st.columns(2)
-        if col1.button("Click to view Raw data"):
-            col1.write(data.find_one())
-        # DATAFRAME FORMAT
-        if col2.button("Click to view Dataframe"):
-            col2.write(df)
-       
-    # INSIGHTS TAB
-    with tab2:
-        # GETTING USER INPUTS
-        country = st.sidebar.multiselect('Select a Country',sorted(df.Country.unique()),sorted(df.Country.unique()))
-        prop = st.sidebar.multiselect('Select Property_type',sorted(df.Property_type.unique()),sorted(df.Property_type.unique()))
-        room = st.sidebar.multiselect('Select Room_type',sorted(df.Room_type.unique()),sorted(df.Room_type.unique()))
-        price = st.slider('Select Price',df.Price.min(),df.Price.max(),(df.Price.min(),df.Price.max()))
-        
-        # CONVERTING THE USER INPUT INTO QUERY
-        query = f'Country in {country} & Room_type in {room} & Property_type in {prop} & Price >= {price[0]} & Price <= {price[1]}'
-        
-        # CREATING COLUMNS
-        col1,col2 = st.columns(2,gap='medium')
-        
+        st.title("**PRICE DIFFERENCE**")
+        col1,col2= st.columns(2)
+
         with col1:
+                        
+            country= st.selectbox("Select the Country",df["country"].unique())
+
+            df1= df[df["country"] == country]
+            df1.reset_index(drop= True, inplace= True)
+
+            room_ty= st.selectbox("Select the Room Type",df1["room_type"].unique())
             
-            # TOP 10 PROPERTY TYPES BAR CHART
-            df1 = df.query(query).groupby(["Property_type"]).size().reset_index(name="Listings").sort_values(by='Listings',ascending=False)[:10]
-            fig = px.bar(df1,
-                         title='Top 10 Property Types',
-                         x='Listings',
-                         y='Property_type',
-                         orientation='h',
-                         color='Property_type',
-                         color_continuous_scale=px.colors.sequential.Agsunset)
-            st.plotly_chart(fig,use_container_width=True) 
-        
-            # TOP 10 HOSTS BAR CHART
-            df2 = df.query(query).groupby(["Host_name"]).size().reset_index(name="Listings").sort_values(by='Listings',ascending=False)[:10]
-            fig = px.bar(df2,
-                         title='Top 10 Hosts with Highest number of Listings',
-                         x='Listings',
-                         y='Host_name',
-                         orientation='h',
-                         color='Host_name',
-                         color_continuous_scale=px.colors.sequential.Agsunset)
-            fig.update_layout(showlegend=False)
-            st.plotly_chart(fig,use_container_width=True)
+            df2= df1[df1["room_type"] == room_ty]
+            df2.reset_index(drop= True, inplace= True)
+
+            df_bar= pd.DataFrame(df2.groupby("property_type")[["price","review_scores","number_of_reviews"]].sum())
+            df_bar.reset_index(inplace= True)
+
+            fig_bar= px.bar(df_bar, x='property_type', y= "price", title= "PRICE FOR PROPERTY_TYPES",hover_data=["number_of_reviews","review_scores"],color_discrete_sequence=px.colors.sequential.Redor_r, width=600, height=500)
+            st.plotly_chart(fig_bar)
+
         
         with col2:
-     
-            # TOTAL LISTINGS IN EACH ROOM TYPES PIE CHART
-            df1 = df.query(query).groupby(["Room_type"]).size().reset_index(name="counts")
-            fig = px.pie(df1,
-                         title='Total Listings in each Room_types',
-                         names='Room_type',
-                         values='counts',
-                         color_discrete_sequence=px.colors.sequential.Rainbow
-                        )
-            fig.update_traces(textposition='outside', textinfo='value+label')
-            st.plotly_chart(fig,use_container_width=True)
             
-            # TOTAL LISTINGS BY COUNTRY CHOROPLETH MAP
-            country_df = df.query(query).groupby(['Country'],as_index=False)['Name'].count().rename(columns={'Name' : 'Total_Listings'})
-            fig = px.choropleth(country_df,
-                                title='Total Listings in each Country',
-                                locations='Country',
-                                locationmode='country names',
-                                color='Total_Listings',
-                                color_continuous_scale=px.colors.sequential.Plasma
-                               )
-            st.plotly_chart(fig,use_container_width=True)
-        
-# EXPLORE PAGE
-if selected == "Explore":
-    st.markdown("## Explore more about the Airbnb data")
-    
-    # GETTING USER INPUTS
-    country = st.sidebar.multiselect('Select a Country',sorted(df.Country.unique()),sorted(df.Country.unique()))
-    prop = st.sidebar.multiselect('Select Property_type',sorted(df.Property_type.unique()),sorted(df.Property_type.unique()))
-    room = st.sidebar.multiselect('Select Room_type',sorted(df.Room_type.unique()),sorted(df.Room_type.unique()))
-    price = st.slider('Select Price',df.Price.min(),df.Price.max(),(df.Price.min(),df.Price.max()))
-    
-    # CONVERTING THE USER INPUT INTO QUERY
-    query = f'Country in {country} & Room_type in {room} & Property_type in {prop} & Price >= {price[0]} & Price <= {price[1]}'
-    
-    # HEADING 1
-    st.markdown("## Price Analysis")
-    
-    # CREATING COLUMNS
-    col1,col2 = st.columns(2,gap='medium')
-    
-    with col1:
-        
-        # AVG PRICE BY ROOM TYPE BARCHART
-        pr_df = df.query(query).groupby('Room_type',as_index=False)['Price'].mean().sort_values(by='Price')
-        fig = px.bar(data_frame=pr_df,
-                     x='Room_type',
-                     y='Price',
-                     color='Price',
-                     title='Avg Price in each Room type'
-                    )
-        st.plotly_chart(fig,use_container_width=True)
-        
-        # HEADING 2
-        st.markdown("## Availability Analysis")
-        
-        # AVAILABILITY BY ROOM TYPE BOX PLOT
-        fig = px.box(data_frame=df.query(query),
-                     x='Room_type',
-                     y='Availability_365',
-                     color='Room_type',
-                     title='Availability by Room_type'
-                    )
-        st.plotly_chart(fig,use_container_width=True)
-        
-    with col2:
-        
-        # AVG PRICE IN COUNTRIES SCATTERGEO
-        country_df = df.query(query).groupby('Country',as_index=False)['Price'].mean()
-        fig = px.scatter_geo(data_frame=country_df,
-                                       locations='Country',
-                                       color= 'Price', 
-                                       hover_data=['Price'],
-                                       locationmode='country names',
-                                       size='Price',
-                                       title= 'Avg Price in each Country',
-                                       color_continuous_scale='agsunset'
-                            )
-        col2.plotly_chart(fig,use_container_width=True)
-        
-        # BLANK SPACE
-        st.markdown("#   ")
-        st.markdown("#   ")
-        
-        # AVG AVAILABILITY IN COUNTRIES SCATTERGEO
-        country_df = df.query(query).groupby('Country',as_index=False)['Availability_365'].mean()
-        country_df.Availability_365 = country_df.Availability_365.astype(int)
-        fig = px.scatter_geo(data_frame=country_df,
-                                       locations='Country',
-                                       color= 'Availability_365', 
-                                       hover_data=['Availability_365'],
-                                       locationmode='country names',
-                                       size='Availability_365',
-                                       title= 'Avg Availability in each Country',
-                                       color_continuous_scale='agsunset'
-                            )
-        st.plotly_chart(fig,use_container_width=True)
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+     
+            proper_ty= st.selectbox("Select the Property_type",df2["property_type"].unique())
 
-if selected == "Contact":
+            df4= df2[df2["property_type"] == proper_ty]
+            df4.reset_index(drop= True, inplace= True)
+
+            df_pie= pd.DataFrame(df4.groupby("host_response_time")[["price","bedrooms"]].sum())
+            df_pie.reset_index(inplace= True)
+
+            fig_pi= px.pie(df_pie, values="price", names= "host_response_time",
+                            hover_data=["bedrooms"],
+                            color_discrete_sequence=px.colors.sequential.BuPu_r,
+                            title="PRICE DIFFERENCE BASED ON HOST RESPONSE TIME",
+                            width= 600, height= 500)
+            st.plotly_chart(fig_pi)
+
+        col1,col2= st.columns(2)
+
+        with col1:
+
+            
+            hostresponsetime= st.selectbox("Select the host_response_time",df4["host_response_time"].unique())
+
+            df5= df4[df4["host_response_time"] == hostresponsetime]
+
+            df_do_bar= pd.DataFrame(df5.groupby("bed_type")[["minimum_nights","maximum_nights","price"]].sum())
+            df_do_bar.reset_index(inplace= True)
+
+            fig_do_bar = px.bar(df_do_bar, x='bed_type', y=['minimum_nights', 'maximum_nights'], 
+            title='MINIMUM NIGHTS AND MAXIMUM NIGHTS',hover_data="price",
+            barmode='group',color_discrete_sequence=px.colors.sequential.Rainbow, width=600, height=500)
+            
+
+            st.plotly_chart(fig_do_bar)
+
+        with col2:
+
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+
+            df_do_bar_2= pd.DataFrame(df5.groupby("bed_type")[["bedrooms","beds","accommodates","price"]].sum())
+            df_do_bar_2.reset_index(inplace= True)
+
+            fig_do_bar_2 = px.bar(df_do_bar_2, x='bed_type', y=['bedrooms', 'beds', 'accommodates'], 
+            title='BEDROOMS AND BEDS ACCOMMODATES',hover_data="price",
+            barmode='group',color_discrete_sequence=px.colors.sequential.Rainbow_r, width= 600, height= 500)
+           
+            st.plotly_chart(fig_do_bar_2)
+
+    with tab2:
+
+        def datafr():
+            df_a= pd.read_csv("Airbnb.csv")
+            return df_a
+
+        df_a= datafr()
+
+        st.title("**AVAILABILITY ANALYSIS**")
+        col1,col2= st.columns(2)
+
+        with col1:
+            
+            
+            country_a= st.selectbox("Select the Country_a",df_a["country"].unique())
+
+            df1_a= df[df["country"] == country_a]
+            df1_a.reset_index(drop= True, inplace= True)
+
+            property_ty_a= st.selectbox("Select the Property Type",df1_a["property_type"].unique())
+            
+            df2_a= df1_a[df1_a["property_type"] == property_ty_a]
+            df2_a.reset_index(drop= True, inplace= True)
+
+            df_a_sunb_30= px.sunburst(df2_a, path=["room_type","bed_type","is_location_exact"], values="availability_30",width=600,height=500,title="Availability_30",color_discrete_sequence=px.colors.sequential.Peach_r)
+            st.plotly_chart(df_a_sunb_30)
+        
+        with col2:
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            
+
+            df_a_sunb_60= px.sunburst(df2_a, path=["room_type","bed_type","is_location_exact"], values="availability_60",width=600,height=500,title="Availability_60",color_discrete_sequence=px.colors.sequential.Blues_r)
+            st.plotly_chart(df_a_sunb_60)
+
+        col1,col2= st.columns(2)
+
+        with col1:
+            
+            df_a_sunb_90= px.sunburst(df2_a, path=["room_type","bed_type","is_location_exact"], values="availability_90",width=600,height=500,title="Availability_90",color_discrete_sequence=px.colors.sequential.Aggrnyl_r)
+            st.plotly_chart(df_a_sunb_90)
+
+        with col2:
+
+            df_a_sunb_365= px.sunburst(df2_a, path=["room_type","bed_type","is_location_exact"], values="availability_365",width=600,height=500,title="Availability_365",color_discrete_sequence=px.colors.sequential.Greens_r)
+            st.plotly_chart(df_a_sunb_365)
+        
+        roomtype_a= st.selectbox("Select the Room Type_a", df2_a["room_type"].unique())
+
+        df3_a= df2_a[df2_a["room_type"] == roomtype_a]
+
+        df_mul_bar_a= pd.DataFrame(df3_a.groupby("host_response_time")[["availability_30","availability_60","availability_90","availability_365","price"]].sum())
+        df_mul_bar_a.reset_index(inplace= True)
+
+        fig_df_mul_bar_a = px.bar(df_mul_bar_a, x='host_response_time', y=['availability_30', 'availability_60', 'availability_90', "availability_365"], 
+        title='AVAILABILITY BASED ON HOST RESPONSE TIME',hover_data="price",
+        barmode='group',color_discrete_sequence=px.colors.sequential.Rainbow_r,width=1000)
+
+        st.plotly_chart(fig_df_mul_bar_a)
+
+
+    with tab3:
+
+        st.title("LOCATION ANALYSIS")
+        st.write("")
+
+        def datafr():
+            df= pd.read_csv("Airbnb.csv")
+            return df
+
+        df_l= datafr()
+
+        country_l= st.selectbox("Select the Country_l",df_l["country"].unique())
+
+        df1_l= df_l[df_l["country"] == country_l]
+        df1_l.reset_index(drop= True, inplace= True)
+
+        proper_ty_l= st.selectbox("Select the Property_type_l",df1_l["property_type"].unique())
+
+        df2_l= df1_l[df1_l["property_type"] == proper_ty_l]
+        df2_l.reset_index(drop= True, inplace= True)
+
+        st.write("")
+
+        def select_the_df(sel_val):
+            if sel_val == str(df2_l['price'].min())+' '+str('to')+' '+str(differ_max_min*0.30 + df2_l['price'].min())+' '+str("(30% of the Value)"):
+
+                df_val_30= df2_l[df2_l["price"] <= differ_max_min*0.30 + df2_l['price'].min()]
+                df_val_30.reset_index(drop= True, inplace= True)
+                return df_val_30
+
+            elif sel_val == str(differ_max_min*0.30 + df2_l['price'].min())+' '+str('to')+' '+str(differ_max_min*0.60 + df2_l['price'].min())+' '+str("(30% to 60% of the Value)"):
+            
+                df_val_60= df2_l[df2_l["price"] >= differ_max_min*0.30 + df2_l['price'].min()]
+                df_val_60_1= df_val_60[df_val_60["price"] <= differ_max_min*0.60 + df2_l['price'].min()]
+                df_val_60_1.reset_index(drop= True, inplace= True)
+                return df_val_60_1
+            
+            elif sel_val == str(differ_max_min*0.60 + df2_l['price'].min())+' '+str('to')+' '+str(df2_l['price'].max())+' '+str("(60% to 100% of the Value)"):
+
+                df_val_100= df2_l[df2_l["price"] >= differ_max_min*0.60 + df2_l['price'].min()]
+                df_val_100.reset_index(drop= True, inplace= True)
+                return df_val_100
+            
+        differ_max_min= df2_l['price'].max()-df2_l['price'].min()
+
+        val_sel= st.radio("Select the Price Range",[str(df2_l['price'].min())+' '+str('to')+' '+str(differ_max_min*0.30 + df2_l['price'].min())+' '+str("(30% of the Value)"),
+                                                    
+                                                    str(differ_max_min*0.30 + df2_l['price'].min())+' '+str('to')+' '+str(differ_max_min*0.60 + df2_l['price'].min())+' '+str("(30% to 60% of the Value)"),
+
+                                                    str(differ_max_min*0.60 + df2_l['price'].min())+' '+str('to')+' '+str(df2_l['price'].max())+' '+str("(60% to 100% of the Value)")])
+                                          
+        df_val_sel= select_the_df(val_sel)
+
+        st.dataframe(df_val_sel)
+
+        # checking the correlation
+
+        df_val_sel_corr= df_val_sel.drop(columns=["listing_url","name", "property_type",                 
+                                            "room_type", "bed_type","cancellation_policy",
+                                            "images","host_url","host_name", "host_location",                   
+                                            "host_response_time", "host_thumbnail_url",            
+                                            "host_response_rate","host_is_superhost","host_has_profile_pic" ,         
+                                            "host_picture_url","host_neighbourhood",
+                                            "host_identity_verified","host_verifications",
+                                            "street", "suburb", "government_area", "market",                        
+                                            "country", "country_code","location_type","is_location_exact",
+                                            "amenities"]).corr()
+        
+        st.dataframe(df_val_sel_corr)
+
+        df_val_sel_gr= pd.DataFrame(df_val_sel.groupby("accommodates")[["cleaning_fee","bedrooms","beds","extra_people"]].sum())
+        df_val_sel_gr.reset_index(inplace= True)
+
+        fig_1= px.bar(df_val_sel_gr, x="accommodates", y= ["cleaning_fee","bedrooms","beds"], title="ACCOMMODATES",
+                    hover_data= "extra_people", barmode='group', color_discrete_sequence=px.colors.sequential.Rainbow_r,width=1000)
+        st.plotly_chart(fig_1)
+        
+        
+        room_ty_l= st.selectbox("Select the Room_Type_l", df_val_sel["room_type"].unique())
+
+        df_val_sel_rt= df_val_sel[df_val_sel["room_type"] == room_ty_l]
+
+        fig_2= px.bar(df_val_sel_rt, x= ["street","host_location","host_neighbourhood"],y="market", title="MARKET",
+                    hover_data= ["name","host_name","market"], barmode='group',orientation='h', color_discrete_sequence=px.colors.sequential.Rainbow_r,width=1000)
+        st.plotly_chart(fig_2)
+
+        fig_3= px.bar(df_val_sel_rt, x="government_area", y= ["host_is_superhost","host_neighbourhood","cancellation_policy"], title="GOVERNMENT_AREA",
+                    hover_data= ["guests_included","location_type"], barmode='group', color_discrete_sequence=px.colors.sequential.Rainbow_r,width=1000)
+        st.plotly_chart(fig_3)
+
+
+    with tab4:
+
+        st.title("GEOSPATIAL VISUALIZATION")
+        st.write("")
+
+        fig_4 = px.scatter_mapbox(df, lat='latitude', lon='longitude', color='price', size='accommodates',
+                        color_continuous_scale= "rainbow",hover_name='name',range_color=(0,49000), mapbox_style="carto-positron",
+                        zoom=1)
+        fig_4.update_layout(width=1150,height=800,title='Geospatial Distribution of Listings')
+        st.plotly_chart(fig_4)   
+
+
+    with tab5:
+
+        country_t= st.selectbox("Select the Country_t",df["country"].unique())
+
+        df1_t= df[df["country"] == country_t]
+
+        property_ty_t= st.selectbox("Select the Property_type_t",df1_t["property_type"].unique())
+
+        df2_t= df1_t[df1_t["property_type"] == property_ty_t]
+        df2_t.reset_index(drop= True, inplace= True)
+
+        df2_t_sorted= df2_t.sort_values(by="price")
+        df2_t_sorted.reset_index(drop= True, inplace= True)
+
+
+        df_price= pd.DataFrame(df2_t_sorted.groupby("host_neighbourhood")["price"].agg(["sum","mean"]))
+        df_price.reset_index(inplace= True)
+        df_price.columns= ["host_neighbourhood", "Total_price", "Avarage_price"]
+        
+        col1, col2= st.columns(2)
+
+        with col1:
+            
+            fig_price= px.bar(df_price, x= "Total_price", y= "host_neighbourhood", orientation='h',
+                            title= "PRICE BASED ON HOST_NEIGHBOURHOOD", width= 600, height= 800)
+            st.plotly_chart(fig_price)
+
+        with col2:
+
+            fig_price_2= px.bar(df_price, x= "Avarage_price", y= "host_neighbourhood", orientation='h',
+                                title= "AVERAGE PRICE BASED ON HOST_NEIGHBOURHOOD",width= 600, height= 800)
+            st.plotly_chart(fig_price_2)
+
+        col1, col2= st.columns(2)
+
+        with col1:
+
+            df_price_1= pd.DataFrame(df2_t_sorted.groupby("host_location")["price"].agg(["sum","mean"]))
+            df_price_1.reset_index(inplace= True)
+            df_price_1.columns= ["host_location", "Total_price", "Avarage_price"]
+            
+            fig_price_3= px.bar(df_price_1, x= "Total_price", y= "host_location", orientation='h',
+                                width= 600,height= 800,color_discrete_sequence=px.colors.sequential.Bluered_r,
+                                title= "PRICE BASED ON HOST_LOCATION")
+            st.plotly_chart(fig_price_3)
+
+        with col2:
+
+            fig_price_4= px.bar(df_price_1, x= "Avarage_price", y= "host_location", orientation='h',
+                                width= 600, height= 800,color_discrete_sequence=px.colors.sequential.Bluered_r,
+                                title= "AVERAGE PRICE BASED ON HOST_LOCATION")
+            st.plotly_chart(fig_price_4)
+
+
+        room_type_t= st.selectbox("Select the Room_Type_t",df2_t_sorted["room_type"].unique())
+
+        df3_t= df2_t_sorted[df2_t_sorted["room_type"] == room_type_t]
+
+        df3_t_sorted_price= df3_t.sort_values(by= "price")
+
+        df3_t_sorted_price.reset_index(drop= True, inplace = True)
+
+        df3_top_50_price= df3_t_sorted_price.head(100)
+
+        fig_top_50_price_1= px.bar(df3_top_50_price, x= "name",  y= "price" ,color= "price",
+                                 color_continuous_scale= "rainbow",
+                                range_color=(0,df3_top_50_price["price"].max()),
+                                title= "MINIMUM_NIGHTS MAXIMUM_NIGHTS AND ACCOMMODATES",
+                                width=1200, height= 800,
+                                hover_data= ["minimum_nights","maximum_nights","accommodates"])
+        
+        st.plotly_chart(fig_top_50_price_1)
+
+        fig_top_50_price_2= px.bar(df3_top_50_price, x= "name",  y= "price",color= "price",
+                                 color_continuous_scale= "greens",
+                                 title= "BEDROOMS, BEDS, ACCOMMODATES AND BED_TYPE",
+                                range_color=(0,df3_top_50_price["price"].max()),
+                                width=1200, height= 800,
+                                hover_data= ["accommodates","bedrooms","beds","bed_type"])
+
+        st.plotly_chart(fig_top_50_price_2)
+
+if select == "About":
+
+    st.header("ABOUT THIS PROJECT")
+
+    st.subheader(":orange[1. Data Collection:]")
+
+    st.write('''***Gather data from MongoDB Atlas database .
+        Collect information on listings, hosts, reviews, pricing, and location data.***''')
+    
+    st.link_button("Data","https://www.mongodb.com/cloud/atlas/efficiency?utm_content=rlsavisitor&utm_source=google&utm_campaign=search_gs_pl_evergreen_atlas_core_retarget-brand_gic-null_apac-all_ps-all_desktop_eng_lead&utm_term=mongodb%20atlas&utm_medium=cpc_paid_search&utm_ad=e&utm_ad_campaign_id=14412646476&adgroup=131761130772&cq_cmp=14412646476&gad=1&gclid=EAIaIQobChMIp8zhuOSEgAMVTw2DAx0aewI4EAAYASABEgIv__D_BwE")
+    
+    st.subheader(":orange[2. Data Cleaning and Preprocessing:]")
+
+    st.write('''***Clean and preprocess the data to handle missing values, outliers, and ensure data quality.
+        Convert data types, handle duplicates, and standardize formats.***''')
+    
+    st.subheader(":orange[3. Exploratory Data Analysis (EDA):]")
+
+    st.write('''***Conduct exploratory data analysis to understand the distribution and patterns in the data.
+        Explore relationships between variables and identify potential insights.***''')
+    
+    st.subheader(":orange[4. Visualization:]")
+
+    st.write('''***Create visualizations to represent key metrics and trends.
+        Use charts, graphs, and maps to convey information effectively.
+        Consider using tools like Matplotlib, Seaborn, or Plotly for visualizations.***''')
+    
+    st.subheader(":orange[5. Geospatial Analysis:]")
+
+    st.write('''***Utilize geospatial analysis to understand the geographical distribution of listings.
+        Map out popular areas, analyze neighborhood characteristics, and visualize pricing variations.***''')
+    
+    st.header("Features Analysis")
+
+    st.markdown(":green[Property Insights:] Analyze the total number of properties based on property type, room type, and bed type.")
+
+    st.markdown(":green[Stay Duration Analysis:] Investigate the minimum and maximum nights guests typically stay.")
+
+    st.markdown(":green[Cancellation Policy Impact:] Understand the impact of cancellation policies on booking trends.")
+
+    st.markdown(":green[Accommodation Metrics:] Explore accommodates, bedrooms, and beds-related statistics.")
+
+    st.markdown(":green[Review Analysis:] Examine total reviews, average review scores, and the distribution of reviews.")
+
+    st.markdown(":green[Bathroom and Pricing Analysis:] Investigate bathroom count, pricing, cleaning prices, and extra guest charges.")
+
+    st.markdown(":green[Guest Inclusion Trends:] Analyze the number of guests included in bookings.") 
+
+    st.markdown(":green[Host Insights:] Explore host-related metrics, including host response time, response rate, and the number of properties hosted.")
+    
+    st.markdown(":green[Geographic Analysis:] Investigate the market and country-level distribution of Airbnb listings.")
+    
+    st.markdown(":green[Availability Trends:] Visualize property availability for the next 30, 60, 90, and 360 days.")
+    
+        
+    
+
+if select == "Contact":
     name = "kaleeswari S"
     mail = (f'{"Mail :"}  {"kaleeswariramkumar25@gmail.com"}')
     description = "An Aspiring DATA-SCIENTIST..!"
@@ -207,17 +466,48 @@ if selected == "Contact":
         "LINKEDIN": "https://www.linkedin.com/in/kaleeswari-s-081a392a6/",
         "KAGGLE": "https://www.kaggle.com/rkaleeswari"}
     
-    col1, col2 = st.columns(2)
-    with col1:
-        st.write("---")
-    with col2:
-        st.title('Airbnb Analysis')
-        st.write("The goal of this project is to analyze Airbnb data using MongoDB Atlas, perform data cleaning and preparation, develop interactive geospatial visualizations, and create dynamic plots to gain insights into pricing variations, availability patterns, and location-based trends.")
-        st.write("---")
-        st.subheader(mail)
-    st.write("#")
-    cols = st.columns(len(social_media))
-    for index, (platform, link) in enumerate(social_media.items()):
-        cols[index].write(f"[{platform}]({link})")
+    tab1,tab2 =st.tabs(['Key Insights','My Profile'])
+    with tab1:
+        st.header("KEY INSIGHTS")
 
-    st.success('🙏Thank you for your golden time. Exiting the application')
+        st.subheader(":rainbow[What I learn from this Project] >>>")
+
+        st.markdown("⭐The price increases as the extra people increases")
+
+        st.markdown("⭐The price increases as the no of AMENITIES increases")
+        
+        st.markdown("⭐The price increases as the no of BED increases")
+        
+        st.markdown("⭐In property type APARTMENT has more price")
+        
+        st.markdown("⭐In room type ENTIRE ROOM has more price")
+        
+        st.markdown("⭐MARCH month has more price comparitively to other months")
+        
+        st.markdown("⭐The MINIMUM NIGHT is 1 and the MAXIMUM NIGHT is 1125")
+        
+        st.markdown("⭐As the Ratings increased Price also increases")
+    
+    with tab2:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.image('airbnb_video.gif')    
+                
+        with col2:
+            st.title('Airbnb Analysis')
+            st.write("The goal of this project is to analyze Airbnb data using MongoDB Atlas, perform data cleaning and preparation, develop interactive geospatial visualizations, and create dynamic plots to gain insights into pricing variations, availability patterns, and location-based trends.")
+            st.link_button("Tableau Report","https://public.tableau.com/app/profile/kaleeswari.s/vizzes")
+            st.write("---")
+            st.subheader(mail)
+
+        st.write("#")
+        cols = st.columns(len(social_media))
+        for index, (platform, link) in enumerate(social_media.items()):
+            cols[index].write(f"[{platform}]({link})")
+
+        st.success('🙏Thank you for your golden time. Exiting the application')
+
+
+
+
